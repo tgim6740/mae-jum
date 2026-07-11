@@ -207,4 +207,148 @@
 
         // 2. 요일 선택에 따라 교시 선택창(Dropdown) 옵션을 동적으로 바꿔주는 함수
         function updatePeriodOptions() {
-            const daySelect = document.getElementById('select-day').
+            const daySelect = document.getElementById('select-day').value;
+            const periodSelect = document.getElementById('select-period');
+            
+            periodSelect.innerHTML = "";
+
+            const options = [
+                { text: "0교시 (아침시간)", value: 0 },
+                { text: "1교시 쉬는시간", value: 1 },
+                { text: "2교시 쉬는시간", value: 2 },
+                { text: "3교시 쉬는시간", value: 3 },
+                { text: "4교시 (점심시간)", value: 4 },
+                { text: "5교시 쉬는시간", value: 5 },
+                { text: "6교시 쉬는시간", value: 6 }
+            ];
+
+            if (daySelect === "수요일" || daySelect === "목요일") {
+                options.push({ text: "7교시 쉬는시간", value: 7 });
+            }
+
+            options.forEach(opt => {
+                const el = document.createElement('option');
+                el.textContent = opt.text;
+                el.value = opt.value;
+                periodSelect.appendChild(el);
+            });
+        }
+
+        // 3. 실시간 시간표 매칭 함수
+        function getCurrentPeriod(hours, minutes, currentDayStr) {
+            const timeInMinutes = hours * 60 + minutes;
+
+            if (timeInMinutes >= 960) {
+                return { name: "영업 종료 시간", index: -2 };
+            }
+
+            if (timeInMinutes >= 480 && timeInMinutes < 530) return { name: "0교시(아침시간)", index: 0 };
+            
+            if (timeInMinutes >= 530 && timeInMinutes < 620) return { name: "1교시", index: 1 };
+            if (timeInMinutes >= 620 && timeInMinutes < 710) return { name: "2교시", index: 2 };
+            if (timeInMinutes >= 710 && timeInMinutes < 800) return { name: "3교시", index: 3 }; 
+            if (timeInMinutes >= 800 && timeInMinutes < 890) return { name: "4교시(점심시간)", index: 4 }; 
+            if (timeInMinutes >= 890 && timeInMinutes < 950) return { name: "5교시", index: 5 };
+            if (timeInMinutes >= 950 && timeInMinutes < 1010) return { name: "6교시", index: 6 };
+            
+            if ((currentDayStr === "수요일" || currentDayStr === "목요일") && timeInMinutes >= 1010 && timeInMinutes < 1070) {
+                return { name: "7교시", index: 7 };
+            }
+
+            return { name: "정규 수업 외 시간", index: -1 };
+        }
+
+        // 4. 실시간 분석 및 화면 업데이트 함수
+        function updateCongestion() {
+            const now = new Date();
+            const weekDays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+            const currentDayStr = weekDays[now.getDay()]; 
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            const timeStr = `${currentDayStr} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            document.getElementById('current-time-display').innerText = `현재 시각: ${timeStr}`;
+
+            if (currentDayStr === "토요일" || currentDayStr === "일요일") {
+                showStatus("영업 종료", "주말에는 매점을 운영하지 않습니다.", 0, "status-smooth", "주말");
+                return;
+            }
+
+            const periodInfo = getCurrentPeriod(hours, minutes, currentDayStr);
+            
+            if (periodInfo.index === -2) {
+                showStatus("영업 종료", "오후 4시 이후 매점 영업이 종료되었습니다. 🚪", 0, "status-smooth", "영업 종료 시간");
+                return;
+            }
+            
+            if (periodInfo.index === -1) {
+                showStatus("운영 외", "현재는 정규 쉬는시간이 아닙니다.", 0, "status-smooth", "기타 시간");
+                return;
+            }
+
+            const dayData = timetableData[currentDayStr];
+            const predictedCount = dayData[periodInfo.index];
+
+            calculateAndShow(predictedCount, `${currentDayStr} ${periodInfo.name}`);
+        }
+
+        // 5. 사용자가 선택한 요일/교시 조회 함수
+        function checkSelectedPeriod() {
+            const selectedDay = document.getElementById('select-day').value;
+            const selectedIndex = parseInt(document.getElementById('select-period').value);
+            const selectElement = document.getElementById('select-period');
+            
+            if(selectElement.options.length === 0) return; 
+            
+            const periodName = selectElement.options[selectElement.selectedIndex].text;
+            const dayData = timetableData[selectedDay];
+            const predictedCount = dayData[selectedIndex];
+
+            document.getElementById('current-time-display').innerText = `🔍 선택 조회: ${selectedDay} ${periodName}`;
+            calculateAndShow(predictedCount, `${selectedDay} ${periodName.split(' ')[0]}`);
+        }
+
+        // 6. 점수 계산 및 테마 변경 함수
+        function calculateAndShow(count, label) {
+            let statusText = "";
+            let statusDesc = "";
+            let statusClass = "";
+
+            if (count === 0) {
+                statusText = "영업 종료";
+                statusDesc = "수업이 종료되어 하교 시간 혹은 운영 외 시간입니다. 🚪";
+                statusClass = "status-smooth";
+            } else if (count <= 30) {
+                statusText = "여 유";
+                statusDesc = "매점이 한산합니다. 편하게 이용하세요! 🟢";
+                statusClass = "status-smooth";
+            } else if (count <= 50) {
+                statusText = "보 통";
+                statusDesc = "사람들이 조금 있을 수 있습니다. 🟡";
+                statusClass = "status-normal";
+            } else {
+                statusText = "혼 잡";
+                statusDesc = "사람이 많아 혼잡합니다. 다음 시간에 방문하는 것은 어떨까요? 🔴";
+                statusClass = "status-crowded";
+            }
+
+            showStatus(statusText, statusDesc, count, statusClass, label);
+        }
+
+        function showStatus(text, desc, count, className, periodName) {
+            const statusBox = document.getElementById('status-box');
+            statusBox.className = `status-card ${className}`;
+            
+            document.getElementById('status-text').innerText = text;
+            document.getElementById('status-desc').innerText = desc;
+            document.getElementById('predicted-count').innerText = count;
+            document.getElementById('info-period').innerText = periodName;
+        }
+
+        // 🚀 [수정 핵심] 안전한 즉시 실행 구조로 변경
+        // HTML 문서의 body를 브라우저가 다 그리는 즉시 아래 두 함수가 무조건 실행됩니다.
+        updatePeriodOptions(); 
+        updateCongestion();   
+    </script>
+</body>
+</html>
