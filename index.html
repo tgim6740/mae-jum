@@ -198,11 +198,11 @@
     <script>
         // 1. 학교 실제 운영 기준 데이터 정의
         const timetableData = {
-            "월요일": [30, 55, 50, 30, 20, 35, 0],    // 6교시 후 하교 (총 7개)
-            "화요일": [35, 55, 55, 35, 25, 40, 0],    // 6교시 후 하교 (총 7개)
-            "수요일": [30, 45, 45, 40, 25, 35, 20, 0], // 7교시 후 하교 (총 8개)
-            "목요일": [30, 45, 45, 55, 25, 30, 65, 0], // 7교시 후 하교 (총 8개)
-            "금요일": [35, 45, 60, 40, 20, 20, 0]     // 6교시 후 하교 (총 7개)
+            "월요일": [30, 55, 50, 30, 25, 35, 0],    // 6교시 후 하교 (총 7개)
+            "화요일": [35, 55, 55, 35, 30, 40, 0],    // 6교시 후 하교 (총 7개)
+            "수요일": [30, 45, 45, 40, 30, 35, 20, 0], // 7교시 후 하교 (총 8개)
+            "목요일": [30, 45, 45, 55, 30, 30, 65, 0], // 7교시 후 하교 (총 8개)
+            "금요일": [35, 45, 60, 40, 25, 20, 0]     // 6교시 후 하교 (총 7개)
         };
 
         // 2. 요일 선택에 따라 교시 선택창(Dropdown) 옵션을 동적으로 바꿔주는 함수
@@ -242,16 +242,16 @@
                 return { name: "영업 종료 시간", index: -2 };
             }
 
-            if (timeInMinutes >= 480 && timeInMinutes < 530) return { name: "0교시(아침시간)", index: 0 };
+            if (timeInMinutes >= 480 && timeInMinutes < 500) return { name: "0교시(아침시간)", index: 0 };
             
-            if (timeInMinutes >= 530 && timeInMinutes < 620) return { name: "1교시", index: 1 };
-            if (timeInMinutes >= 620 && timeInMinutes < 710) return { name: "2교시", index: 2 };
-            if (timeInMinutes >= 710 && timeInMinutes < 800) return { name: "3교시", index: 3 }; 
-            if (timeInMinutes >= 800 && timeInMinutes < 890) return { name: "4교시(점심시간)", index: 4 }; 
-            if (timeInMinutes >= 890 && timeInMinutes < 950) return { name: "5교시", index: 5 };
-            if (timeInMinutes >= 950 && timeInMinutes < 1010) return { name: "6교시", index: 6 };
+            if (timeInMinutes >= 500 && timeInMinutes < 550) return { name: "1교시", index: 1 };
+            if (timeInMinutes >= 550 && timeInMinutes < 600) return { name: "2교시", index: 2 };
+            if (timeInMinutes >= 600 && timeInMinutes < 650) return { name: "3교시", index: 3 }; 
+            if (timeInMinutes >= 650 && timeInMinutes < 700) return { name: "4교시", index: 4 }; 
+            if (timeInMinutes >= 700 && timeInMinutes < 800) return { name: "5교시(점심시간)", index: 5 };
+            if (timeInMinutes >= 800 && timeInMinutes < 850) return { name: "6교시", index: 6 };
             
-            if ((currentDayStr === "수요일" || currentDayStr === "목요일") && timeInMinutes >= 1010 && timeInMinutes < 1070) {
+            if ((currentDayStr === "수요일" || currentDayStr === "목요일") && timeInMinutes >= 900 && timeInMinutes < 960) {
                 return { name: "7교시", index: 7 };
             }
 
